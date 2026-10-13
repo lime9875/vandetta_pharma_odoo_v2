@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vandetta | نظام فانديتا لإدارة مخازن الأدوية العالمية (Odoo ERP)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom External Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="glass-panel sticky top-0 z-40 px-6 py-3 border-b border-slate-700/50 flex items-center justify-between">
+        <div class="flex items-center space-x-6 space-x-reverse">
+            <!-- Brand -->
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-500/30">
+                    V
+                </div>
+                <div>
+                    <h1 class="text-xl font-black bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent tracking-wide">VANDETTA</h1>
+                    <p class="text-[10px] text-slate-400 font-medium">نظام أودو لإدارة المستودعات والتوريد الطبي</p>
+                </div>
+            </div>
+
+            <!-- Main Menu / Apps -->
+            <nav class="hidden md:flex items-center space-x-1 space-x-reverse bg-slate-800/60 p-1 rounded-xl border border-slate-700/50 text-sm">
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active px-4 py-1.5 rounded-lg font-bold flex items-center space-x-2 space-x-reverse bg-indigo-600 text-white shadow-md">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>لوحة التحكم</span>
+                </button>
+                <button onclick="switchTab('inventory')" id="btn-inventory" class="nav-btn px-4 py-1.5 rounded-lg font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 transition">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    <span>المخزون العام</span>
+                </button>
+                <button onclick="switchTab('suppliers')" id="btn-suppliers" class="nav-btn px-4 py-1.5 rounded-lg font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 transition">
+                    <i class="fa-solid fa-building-flag"></i>
+                    <span>الشركات العالمية</span>
+                </button>
+                <button onclick="switchTab('coldchain')" id="btn-coldchain" class="nav-btn px-4 py-1.5 rounded-lg font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 transition">
+                    <i class="fa-solid fa-snowflake"></i>
+                    <span>التبريد وسلسلة الإمداد</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="flex items-center space-x-3 space-x-reverse">
+            <button onclick="openAddModal()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 space-x-reverse shadow-lg shadow-emerald-500/20 transition">
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>إضافة شحنة دواعية</span>
+            </button>
+            <button onclick="exportCSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-xl text-sm font-medium transition flex items-center space-x-2 space-x-reverse">
+                <i class="fa-solid fa-file-excel text-emerald-400"></i>
+                <span class="hidden sm:inline">تصدير CSV</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 p-6 space-y-6 max-w-7xl mx-auto w-full">
+
+        <!-- TAB 1: DASHBOARD -->
+        <section id="tab-dashboard" class="tab-content space-y-6">
+            <!-- Stats Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="glass-card p-5 rounded-2xl border-r-4 border-indigo-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400 font-bold mb-1">إجمالي الأصناف المتاحة</p>
+                            <h3 id="stat-total-items" class="text-2xl font-black text-white">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-capsules"></i>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-emerald-400 mt-2 font-medium"><i class="fa-solid fa-arrow-up"></i> 100% تغطية المخازن</p>
+                </div>
+
+                <div class="glass-card p-5 rounded-2xl border-r-4 border-emerald-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400 font-bold mb-1">قيمة المخزون الكلية</p>
+                            <h3 id="stat-total-val" class="text-2xl font-black text-emerald-400">$0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-vault"></i>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2 font-medium">تقييم مالي حي للمستودعات</p>
+                </div>
+
+                <div class="glass-card p-5 rounded-2xl border-r-4 border-purple-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400 font-bold mb-1">الشركات العالمية المرتبطة</p>
+                            <h3 id="stat-companies" class="text-2xl font-black text-purple-300">15</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-earth-americas"></i>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-purple-400 mt-2 font-medium">شراكات توريد دولية</p>
+                </div>
+
+                <div class="glass-card p-5 rounded-2xl border-r-4 border-cyan-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400 font-bold mb-1">غرف التبريد النشطة</p>
+                            <h3 class="text-2xl font-black text-cyan-300">4 غرف</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-snowflake"></i>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-cyan-400 mt-2 font-medium"><i class="fa-solid fa-check"></i> حرارة مستقرة 2°C - 8°C</p>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Stock Bar Chart -->
+                <div class="glass-panel p-5 rounded-2xl lg:col-span-2 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-200 flex items-center space-x-2 space-x-reverse">
+                            <i class="fa-solid fa-chart-column text-indigo-400"></i>
+                            <span>توزيع المخزون حسب الشركات المصنعة (العبوات المتاحة)</span>
+                        </h3>
+                    </div>
+                    <div class="h-64 relative w-full">
+                        <canvas id="stockChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Stock Category Donut -->
+                <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-200 flex items-center space-x-2 space-x-reverse">
+                            <i class="fa-solid fa-chart-pie text-pink-400"></i>
+                            <span>نسب الأشكال الدوائية</span>
+                        </h3>
+                    </div>
+                    <div class="h-64 relative w-full flex items-center justify-center">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: INVENTORY DATABASE -->
+        <section id="tab-inventory" class="tab-content hidden space-y-4">
+            <!-- Filter Bar -->
+            <div class="glass-panel p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="relative w-full sm:w-80">
+                    <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-slate-400"></i>
+                    <input type="text" id="searchInput" oninput="renderTable()" placeholder="ابحث باسم الدواء، الشركة، أو الكود..." class="w-full bg-slate-800/80 border border-slate-700/80 rounded-xl pr-10 pl-4 py-2 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="flex items-center space-x-3 space-x-reverse w-full sm:w-auto">
+                    <select id="companyFilter" onchange="renderTable()" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                        <option value="">جميع الشركات العالمية</option>
+                    </select>
+                    <select id="typeFilter" onchange="renderTable()" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                        <option value="">جميع الأشكال الدوائية</option>
+                        <option value="حقن">حقن / حقن زجاجية</option>
+                        <option value="أقراص">أقراص / كبسولات</option>
+                        <option value="محلول">محلول وريدي</option>
+                        <option value="قطرة">قطرة عين / أنف</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="glass-panel rounded-2xl overflow-hidden border border-slate-700/50">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-sm text-slate-300">
+                        <thead class="bg-slate-800/90 text-slate-400 text-xs uppercase border-b border-slate-700">
+                            <tr>
+                                <th class="p-4">اسم الدواء</th>
+                                <th class="p-4">الشركة العالمية المصنعة</th>
+                                <th class="p-4">الشكل الدوائي</th>
+                                <th class="p-4">رقم التشغيلة (Batch)</th>
+                                <th class="p-4">الكمية بالمخزن</th>
+                                <th class="p-4">سعر الوحدة</th>
+                                <th class="p-4">تاريخ الصلاحية</th>
+                                <th class="p-4 text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody" class="divide-y divide-slate-800">
+                            <!-- Rows inserted dynamically via app.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: GLOBAL PHARMA SUPPLIERS -->
+        <section id="tab-suppliers" class="tab-content hidden space-y-6">
+            <div class="glass-panel p-6 rounded-2xl">
+                <h2 class="text-xl font-bold text-white mb-2 flex items-center space-x-2 space-x-reverse">
+                    <i class="fa-solid fa-earth-americas text-indigo-400"></i>
+                    <span>قاعدة بيانات شركات الأدوية العالمية المرتبطة بالنظام</span>
+                </h2>
+                <p class="text-xs text-slate-400 mb-6">قائمة تضم أهم 15 شركة أدوية على مستوى العالم والأدوية الرئيسية المسجلة بمخازن VANDETTA.</p>
+
+                <div id="companiesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Cards populated via app.js -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: COLD CHAIN & LOGISTICS -->
+        <section id="tab-coldchain" class="tab-content hidden space-y-6">
+            <div class="glass-panel p-6 rounded-2xl space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center space-x-2 space-x-reverse">
+                            <i class="fa-solid fa-temperature-arrow-down text-cyan-400"></i>
+                            <span>منظومة التبريد والتخزين الحراري (Cold Chain Management)</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">متابعة لحظية لدرجات حرارة الأنسولين، اللقاحات، والمستحضرات الحيوية</p>
+                    </div>
+                    <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-bold rounded-full border border-emerald-500/30 flex items-center space-x-1.5 space-x-reverse">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-emerald"></span>
+                        <span>أجهزة الحساسات تعمل بكفاءة</span>
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-card p-4 rounded-xl border border-cyan-500/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-slate-300">مستودع التبريد A1 (اللقاحات)</span>
+                            <span class="text-xs font-bold text-emerald-400">4.2°C</span>
+                        </div>
+                        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                            <div class="bg-cyan-400 h-full w-[45%]"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">النطاق المسموح: 2.0°C - 8.0°C</p>
+                    </div>
+
+                    <div class="glass-card p-4 rounded-xl border border-cyan-500/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-slate-300">مستودع B2 (الأنسولين والهرمونات)</span>
+                            <span class="text-xs font-bold text-emerald-400">5.1°C</span>
+                        </div>
+                        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                            <div class="bg-cyan-400 h-full w-[55%]"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">النطاق المسموح: 2.0°C - 8.0°C</p>
+                    </div>
+
+                    <div class="glass-card p-4 rounded-xl border border-cyan-500/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-slate-300">مستودع C1 (الأجسام المضادة)</span>
+                            <span class="text-xs font-bold text-emerald-400">3.8°C</span>
+                        </div>
+                        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                            <div class="bg-cyan-400 h-full w-[40%]"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">النطاق المسموح: 2.0°C - 8.0°C</p>
+                    </div>
+
+                    <div class="glass-card p-4 rounded-xl border border-cyan-500/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-slate-300">التجميد الفائق D3</span>
+                            <span class="text-xs font-bold text-cyan-400">-22.5°C</span>
+                        </div>
+                        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                            <div class="bg-indigo-400 h-full w-[85%]"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">النطاق المسموح: -15°C - -25°C</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal: Add New Shipment -->
+    <div id="addModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="glass-panel w-full max-w-xl p-6 rounded-2xl border border-slate-700 shadow-2xl relative">
+            <button onclick="closeAddModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center space-x-2 space-x-reverse">
+                <i class="fa-solid fa-box-archive text-emerald-400"></i>
+                <span>تسجيل شحنة دوائية جديدة - Vandetta System</span>
+            </h3>
+
+            <form id="addMedicineForm" onsubmit="handleAddMedicine(event)" class="space-y-4 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">اسم الدواء / التجاري</label>
+                        <input type="text" id="m_name" required placeholder="مثال: Keytruda 100mg" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">الشركة العالمية المصنعة</label>
+                        <select id="m_company" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                            <!-- Populated via script -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">الشكل الدوائي</label>
+                        <select id="m_type" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                            <option value="حقن">حقن / Vials</option>
+                            <option value="أقراص">أقراص / Capsules</option>
+                            <option value="محلول">محلول وريدي</option>
+                            <option value="قطرة">قطرة عين</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">الكمية بالعبوات</label>
+                        <input type="number" id="m_qty" required min="1" placeholder="1000" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">سعر العبوة ($)</label>
+                        <input type="number" id="m_price" required step="0.01" placeholder="150.00" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">رقم التشغيلة (Batch Number)</label>
+                        <input type="text" id="m_batch" required placeholder="BN-99281" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">تاريخ انتهاء الصلاحية</label>
+                        <input type="date" id="m_exp" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-3 space-x-reverse">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 font-medium">إلغاء</button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30">حفظ الشحنة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Core Script -->
+    <script src="js/app.js"></script>
+</body>
+</html>
